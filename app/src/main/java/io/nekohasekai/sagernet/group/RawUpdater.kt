@@ -497,8 +497,8 @@ object RawUpdater : GroupUpdater() {
                                 when (opt.key.replace("_", "-")) {
                                     "name" -> bean.name = opt.value.toString()
                                     "server" -> bean.serverAddress = opt.value as String
-                                    "port" -> bean.serverPorts = opt.value.toString()
-                                    "ports" -> hopPorts = opt.value.toString()
+                                    "port" -> bean.serverPort = opt.value.toString().toInt()
+                                    "ports" -> bean.serverPorts = opt.value.toString()
 
                                     "obfs" -> bean.obfuscation = opt.value.toString()
 
@@ -535,9 +535,6 @@ object RawUpdater : GroupUpdater() {
                                     }
                                 }
                             }
-                            if (hopPorts.isNotBlank()) {
-                                bean.serverPorts = hopPorts
-                            }
                             proxies.add(bean)
                         }
 
@@ -550,8 +547,8 @@ object RawUpdater : GroupUpdater() {
                                 when (opt.key.replace("_", "-")) {
                                     "name" -> bean.name = opt.value.toString()
                                     "server" -> bean.serverAddress = opt.value as String
-                                    "port" -> bean.serverPorts = opt.value.toString()
-                                    "ports" -> hopPorts = opt.value.toString()
+                                    "port" -> bean.serverPort = opt.value.toString().toInt()
+                                    "ports" -> bean.serverPorts = opt.value.toString()
 
                                     "obfs-password" -> bean.obfuscation = opt.value.toString()
 
@@ -568,9 +565,6 @@ object RawUpdater : GroupUpdater() {
                                     "down" -> bean.downloadMbps =
                                         opt.value.toString().substringBefore(" ").toIntOrNull() ?: 0
                                 }
-                            }
-                            if (hopPorts.isNotBlank()) {
-                                bean.serverPorts = hopPorts
                             }
                             proxies.add(bean)
                         }

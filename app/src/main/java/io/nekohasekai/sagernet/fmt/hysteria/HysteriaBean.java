@@ -76,7 +76,7 @@ public class HysteriaBean extends AbstractBean {
         if (streamReceiveWindow == null) streamReceiveWindow = 0;
         if (connectionReceiveWindow == null) connectionReceiveWindow = 0;
         if (disableMtuDiscovery == null) disableMtuDiscovery = false;
-        if (hopInterval == null) hopInterval = 10;
+        if (hopInterval == null) hopInterval = 30;
         if (serverPorts == null) serverPorts = "443";
     }
 
