@@ -2,7 +2,7 @@ package io.nekohasekai.sagernet.utils
 
 import android.content.Context
 import io.nekohasekai.sagernet.ktx.app
-import libcore.Geosite
+import libbox.Geosite
 import java.io.File
 
 object GeositeUtils {

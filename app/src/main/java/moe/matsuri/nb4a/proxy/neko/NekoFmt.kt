@@ -4,7 +4,7 @@ import io.nekohasekai.sagernet.database.DataStore
 import io.nekohasekai.sagernet.ktx.Logs
 import io.nekohasekai.sagernet.ktx.getStr
 import io.nekohasekai.sagernet.ktx.runOnIoDispatcher
-import libcore.Libcore
+import libbox.Libbox
 import moe.matsuri.nb4a.Protocols
 import moe.matsuri.nb4a.plugin.NekoPluginManager
 import org.json.JSONObject
@@ -94,7 +94,7 @@ fun NekoBean.hash(): String {
     var a = plgId
     a += protocolId
     a += sharedStorage.toString()
-    return Libcore.sha256Hex(a.toByteArray())
+    return Libbox.sha256Hex(a.toByteArray())
 }
 
 // must call it to update something like serverAddress

@@ -2,10 +2,13 @@
 
 source "buildScript/init/env.sh"
 
-# fetch soucre
-bash buildScript/lib/core/get_source.sh
+cd sing-box
+[ -f go.mod ] || exit 1
 
-[ -f libcore/go.mod ] || exit 1
-cd libcore
+# Install gomobile
+if [ ! -f "$GOPATH/bin/gomobile" ]; then
+    go install -v github.com/sagernet/gomobile/cmd/gomobile
+    go install -v github.com/sagernet/gomobile/cmd/gobind
+fi
 
-./init.sh || exit 1
+gomobile init

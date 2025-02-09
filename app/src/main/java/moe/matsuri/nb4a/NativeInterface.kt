@@ -14,8 +14,8 @@ import io.nekohasekai.sagernet.ktx.Logs
 import io.nekohasekai.sagernet.ktx.app
 import io.nekohasekai.sagernet.ktx.runOnDefaultDispatcher
 import io.nekohasekai.sagernet.utils.PackageCache
-import libcore.BoxPlatformInterface
-import libcore.NB4AInterface
+import libbox.BoxPlatformInterface
+import libbox.NB4AInterface
 import moe.matsuri.nb4a.utils.LibcoreUtil
 import java.net.InetSocketAddress
 

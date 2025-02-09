@@ -16,7 +16,7 @@ import io.nekohasekai.sagernet.fmt.hysteria.HysteriaBean
 import io.nekohasekai.sagernet.ktx.*
 import io.nekohasekai.sagernet.ui.VpnRequestActivity
 import io.nekohasekai.sagernet.utils.Subnet
-import libcore.*
+import libbox.*
 import moe.matsuri.nb4a.net.LocalResolverImpl
 import moe.matsuri.nb4a.proxy.neko.needBypassRootUid
 import android.net.VpnService as BaseVpnService

@@ -3,7 +3,7 @@ package moe.matsuri.nb4a.utils
 import io.nekohasekai.sagernet.database.DataStore
 import io.nekohasekai.sagernet.database.ProxyEntity
 import io.nekohasekai.sagernet.database.SagerDatabase
-import libcore.Libcore
+import libbox.Libbox
 
 object LibcoreUtil {
     fun resetAllConnections(system: Boolean) {
@@ -13,6 +13,6 @@ object LibcoreUtil {
                 return
             }
         }
-        Libcore.resetAllConnections(system)
+        Libbox.resetAllConnections(system)
     }
 }

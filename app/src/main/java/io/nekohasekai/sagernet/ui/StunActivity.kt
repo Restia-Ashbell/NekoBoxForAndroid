@@ -8,7 +8,7 @@ import io.nekohasekai.sagernet.databinding.LayoutStunBinding
 import io.nekohasekai.sagernet.ktx.onMainDispatcher
 import io.nekohasekai.sagernet.ktx.readableMessage
 import io.nekohasekai.sagernet.ktx.runOnDefaultDispatcher
-import libcore.Libcore
+import libbox.Libbox
 
 class StunActivity : ThemedActivity() {
 
@@ -34,7 +34,7 @@ class StunActivity : ThemedActivity() {
         binding.waitLayout.isVisible = true
         runOnDefaultDispatcher {
             val result = try {
-                val _result = Libcore.stunTest(binding.natStunServer.text.toString())
+                val _result = Libbox.stunTest(binding.natStunServer.text.toString())
                 if (_result!!.success) {
                     _result.text
                 } else {

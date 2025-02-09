@@ -10,8 +10,8 @@ import io.nekohasekai.sagernet.ktx.tryResumeWithException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
 import kotlinx.coroutines.runBlocking
-import libcore.ExchangeContext
-import libcore.LocalDNSTransport
+import libbox.ExchangeContext
+import libbox.LocalDNSTransport
 import java.net.InetAddress
 import java.net.UnknownHostException
 import kotlin.coroutines.resume

@@ -25,7 +25,7 @@ import io.nekohasekai.sagernet.ui.MainActivity
 import io.nekohasekai.sagernet.utils.*
 import kotlinx.coroutines.DEBUG_PROPERTY_NAME
 import kotlinx.coroutines.DEBUG_PROPERTY_VALUE_ON
-import libcore.Libcore
+import libbox.Libbox
 import moe.matsuri.nb4a.NativeInterface
 import moe.matsuri.nb4a.utils.JavaUtil
 import moe.matsuri.nb4a.utils.cleanWebview
@@ -73,7 +73,7 @@ class SagerNet() : Application(),
 
         // nb4a: init core
         externalAssets.mkdirs()
-        Libcore.initCore(
+        Libbox.initCore(
             process,
             cacheDir.absolutePath + "/",
             filesDir.absolutePath + "/",
@@ -111,7 +111,7 @@ class SagerNet() : Application(),
     override fun onTrimMemory(level: Int) {
         super.onTrimMemory(level)
 
-        Libcore.forceGc()
+        Libbox.forceGc()
     }
 
     @SuppressLint("InlinedApi")

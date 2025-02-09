@@ -2,7 +2,7 @@ package io.nekohasekai.sagernet.utils
 
 import android.content.Context
 import io.nekohasekai.sagernet.ktx.app
-import libcore.Libcore
+import libbox.Libbox
 import java.io.File
 
 object GeoipUtils {
@@ -26,7 +26,7 @@ object GeoipUtils {
 
         val geositeFile = File(filesDir, "geoip.db")
 
-        val geoip = Libcore.newGeoip()
+        val geoip = Libbox.newGeoip()
         if (!geoip.openGeosite(geositeFile.absolutePath)) {
             error("open geoip failed")
         }

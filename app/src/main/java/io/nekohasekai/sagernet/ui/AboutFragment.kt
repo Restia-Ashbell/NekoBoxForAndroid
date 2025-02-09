@@ -26,7 +26,7 @@ import io.nekohasekai.sagernet.ktx.*
 import io.nekohasekai.sagernet.plugin.PluginManager.loadString
 import io.nekohasekai.sagernet.utils.PackageCache
 import io.nekohasekai.sagernet.widget.ListHolderListener
-import libcore.Libcore
+import libbox.Libbox
 import moe.matsuri.nb4a.plugin.Plugins
 
 class AboutFragment : ToolbarFragment(R.layout.layout_about) {
@@ -90,7 +90,7 @@ class AboutFragment : ToolbarFragment(R.layout.layout_about) {
                     .addItem(MaterialAboutActionItem.Builder()
                         .icon(R.drawable.ic_baseline_layers_24)
                         .text(getString(R.string.version_x, "sing-box"))
-                        .subText(Libcore.versionBox())
+                        .subText(Libbox.versionBox())
                         .setOnClickAction { }
                         .build())
                     .addItem(MaterialAboutActionItem.Builder()

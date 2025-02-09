@@ -6,22 +6,30 @@ on:
     branches:
       - '*'
   pull_request:
+  workflow_dispatch:
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout App
         uses: actions/checkout@v4
+      - name: Checkout Core
+        uses: actions/checkout@v4
+        with:
+          path: sing-box
+          repository: Restia-Ashbell/sing-box
       - name: Libcore Status
-        run: git ls-files buildScript libcore | xargs cat | sha1sum > libcore_status
+        run: |
+          git ls-files buildScript | xargs cat | sha1sum > libcore_status
+          cd sing-box && git ls-files | xargs cat | sha1sum >> ../libcore_status
       - name: LibCore Cache
         id: cache
         uses: actions/cache@v4
         with:
           path: |
-            app/libs/libcore.aar
+            app/libs/libbox.aar
           key: ${{ hashFiles('.github/workflows/*', 'libcore_status') }}-ci
-      - name: Gradle cache
+      - name: Gradle Cache
         uses: actions/cache@v4
         with:
           path: ~/.gradle

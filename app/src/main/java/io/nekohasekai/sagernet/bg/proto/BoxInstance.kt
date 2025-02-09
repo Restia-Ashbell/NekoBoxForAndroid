@@ -19,8 +19,8 @@ import io.nekohasekai.sagernet.fmt.trojan_go.buildTrojanGoConfig
 import io.nekohasekai.sagernet.ktx.*
 import io.nekohasekai.sagernet.plugin.PluginManager
 import kotlinx.coroutines.*
-import libcore.BoxInstance
-import libcore.Libcore
+import libbox.BoxInstance
+import libbox.Libbox
 import moe.matsuri.nb4a.plugin.NekoPluginManager
 import moe.matsuri.nb4a.proxy.neko.NekoBean
 import moe.matsuri.nb4a.proxy.neko.NekoJSInterface
@@ -54,7 +54,7 @@ abstract class BoxInstance(
 
     protected open suspend fun loadConfig() {
         NekoJSInterface.Default.destroyAllJsi()
-        box = Libcore.newSingBoxInstance(config.config)
+        box = Libbox.newSingBoxInstance(config.config)
     }
 
     open suspend fun init() {

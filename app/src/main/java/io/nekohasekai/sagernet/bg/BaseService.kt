@@ -21,7 +21,7 @@ import io.nekohasekai.sagernet.utils.DefaultNetworkListener
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import libcore.Libcore
+import libbox.Libbox
 import moe.matsuri.nb4a.Protocols
 import moe.matsuri.nb4a.utils.LibcoreUtil
 import moe.matsuri.nb4a.utils.Util
@@ -138,7 +138,7 @@ class BaseService {
                 error("core not started")
             }
             try {
-                return Libcore.urlTest(
+                return Libbox.urlTest(
                     data!!.proxy!!.box, DataStore.connectionTestURL, 3000
                 )
             } catch (e: Exception) {

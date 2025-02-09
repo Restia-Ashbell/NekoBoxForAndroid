@@ -11,7 +11,7 @@ import io.nekohasekai.sagernet.R
 import io.nekohasekai.sagernet.databinding.LayoutLogcatBinding
 import io.nekohasekai.sagernet.ktx.*
 import io.nekohasekai.sfa.utils.ColorUtils
-import libcore.Libcore
+import libbox.Libbox
 import moe.matsuri.nb4a.utils.SendLog
 
 class LogcatFragment : ToolbarFragment(R.layout.layout_logcat),
@@ -52,7 +52,7 @@ class LogcatFragment : ToolbarFragment(R.layout.layout_logcat),
             R.id.action_clear_logcat -> {
                 runOnDefaultDispatcher {
                     try {
-                        Libcore.nekoLogClear()
+                        Libbox.nekoLogClear()
                         Runtime.getRuntime().exec("/system/bin/logcat -c")
                     } catch (e: Exception) {
                         onMainDispatcher {

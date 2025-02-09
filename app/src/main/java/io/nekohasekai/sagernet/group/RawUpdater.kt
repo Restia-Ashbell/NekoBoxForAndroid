@@ -23,7 +23,7 @@ import io.nekohasekai.sagernet.fmt.v2ray.isTLS
 import io.nekohasekai.sagernet.fmt.v2ray.setTLS
 import io.nekohasekai.sagernet.fmt.wireguard.WireGuardBean
 import io.nekohasekai.sagernet.ktx.*
-import libcore.Libcore
+import libbox.Libbox
 import moe.matsuri.nb4a.Protocols
 import moe.matsuri.nb4a.proxy.config.ConfigBean
 import org.ini4j.Ini
@@ -57,7 +57,7 @@ object RawUpdater : GroupUpdater() {
                 ?: error(app.getString(R.string.no_proxies_found_in_subscription))
         } else {
 
-            val response = Libcore.newHttpClient().apply {
+            val response = Libbox.newHttpClient().apply {
                 trySocks5(DataStore.mixedPort)
                 when (DataStore.appTLSVersion) {
                     "1.3" -> restrictedTLS()
