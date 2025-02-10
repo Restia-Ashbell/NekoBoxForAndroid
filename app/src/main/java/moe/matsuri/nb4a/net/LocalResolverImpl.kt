@@ -5,21 +5,19 @@ import android.os.Build
 import android.os.CancellationSignal
 import android.system.ErrnoException
 import androidx.annotation.RequiresApi
-import io.nekohasekai.sagernet.SagerNet
+import io.nekohasekai.sagernet.bg.DefaultNetworkMonitor
 import io.nekohasekai.sagernet.ktx.tryResumeWithException
+import java.net.InetAddress
+import java.net.UnknownHostException
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
 import kotlinx.coroutines.runBlocking
 import libbox.ExchangeContext
 import libbox.LocalDNSTransport
-import java.net.InetAddress
-import java.net.UnknownHostException
-import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 
-object LocalResolverImpl : LocalDNSTransport {
-
-    // new local
+object LocalResolver : LocalDNSTransport {
 
     private const val RCODE_NXDOMAIN = 3
 
@@ -30,13 +28,17 @@ object LocalResolverImpl : LocalDNSTransport {
     @RequiresApi(Build.VERSION_CODES.Q)
     override fun exchange(ctx: ExchangeContext, message: ByteArray) {
         return runBlocking {
+            val defaultNetwork = DefaultNetworkMonitor.require()
             suspendCoroutine { continuation ->
                 val signal = CancellationSignal()
                 ctx.onCancel(signal::cancel)
                 val callback = object : DnsResolver.Callback<ByteArray> {
                     override fun onAnswer(answer: ByteArray, rcode: Int) {
-                        // exchange don't generate rcode error
-                        ctx.rawSuccess(answer)
+                        if (rcode == 0) {
+                            ctx.rawSuccess(answer)
+                        } else {
+                            ctx.errorCode(rcode)
+                        }
                         continuation.resume(Unit)
                     }
 
@@ -52,7 +54,7 @@ object LocalResolverImpl : LocalDNSTransport {
                     }
                 }
                 DnsResolver.getInstance().rawQuery(
-                    SagerNet.underlyingNetwork,
+                    defaultNetwork,
                     message,
                     DnsResolver.FLAG_NO_RETRY,
                     Dispatchers.IO.asExecutor(),
@@ -64,12 +66,14 @@ object LocalResolverImpl : LocalDNSTransport {
     }
 
     override fun lookup(ctx: ExchangeContext, network: String, domain: String) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            return runBlocking {
+        return runBlocking {
+            val defaultNetwork = DefaultNetworkMonitor.require()
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 suspendCoroutine { continuation ->
                     val signal = CancellationSignal()
                     ctx.onCancel(signal::cancel)
                     val callback = object : DnsResolver.Callback<Collection<InetAddress>> {
+                        @Suppress("ThrowableNotThrown")
                         override fun onAnswer(answer: Collection<InetAddress>, rcode: Int) {
                             if (rcode == 0) {
                                 ctx.success((answer as Collection<InetAddress?>).mapNotNull { it?.hostAddress }
@@ -98,7 +102,7 @@ object LocalResolverImpl : LocalDNSTransport {
                     }
                     if (type != null) {
                         DnsResolver.getInstance().query(
-                            SagerNet.underlyingNetwork,
+                            defaultNetwork,
                             domain,
                             type,
                             DnsResolver.FLAG_NO_RETRY,
@@ -108,7 +112,7 @@ object LocalResolverImpl : LocalDNSTransport {
                         )
                     } else {
                         DnsResolver.getInstance().query(
-                            SagerNet.underlyingNetwork,
+                            defaultNetwork,
                             domain,
                             DnsResolver.FLAG_NO_RETRY,
                             Dispatchers.IO.asExecutor(),
@@ -117,21 +121,15 @@ object LocalResolverImpl : LocalDNSTransport {
                         )
                     }
                 }
-            }
-        } else {
-            val answer = try {
-                val u = SagerNet.underlyingNetwork
-                if (u != null) {
-                    u.getAllByName(domain)
-                } else {
-                    InetAddress.getAllByName(domain)
+            } else {
+                val answer = try {
+                    defaultNetwork.getAllByName(domain)
+                } catch (e: UnknownHostException) {
+                    ctx.errorCode(RCODE_NXDOMAIN)
+                    return@runBlocking
                 }
-            } catch (e: UnknownHostException) {
-                ctx.errorCode(RCODE_NXDOMAIN)
-                return
+                ctx.success(answer.mapNotNull { it.hostAddress }.joinToString("\n"))
             }
-            ctx.success(answer.mapNotNull { it.hostAddress }.joinToString("\n"))
         }
     }
-
 }

@@ -86,11 +86,6 @@ class SagerNet() : Application(),
         if (isMainProcess) {
             Theme.apply(this)
             Theme.applyNightTheme()
-            runOnDefaultDispatcher {
-                DefaultNetworkListener.start(this) {
-                    underlyingNetwork = it
-                }
-            }
         }
 
         if (BuildConfig.DEBUG) StrictMode.setVmPolicy(

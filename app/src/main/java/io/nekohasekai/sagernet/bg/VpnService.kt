@@ -17,7 +17,6 @@ import io.nekohasekai.sagernet.ktx.*
 import io.nekohasekai.sagernet.ui.VpnRequestActivity
 import io.nekohasekai.sagernet.utils.Subnet
 import libbox.*
-import moe.matsuri.nb4a.net.LocalResolverImpl
 import moe.matsuri.nb4a.proxy.neko.needBypassRootUid
 import android.net.VpnService as BaseVpnService
 
@@ -92,7 +91,7 @@ class VpnService : BaseVpnService(),
         override fun getLocalizedMessage() = getString(R.string.reboot_required)
     }
 
-    fun startVpn(tunOptionsJson: String, tunPlatformOptionsJson: String): Int {
+    fun startVpn(tunOptions: TunOptions): Int {
 //        Logs.d(tunOptionsJson)
 //        Logs.d(tunPlatformOptionsJson)
 //        val tunOptions = JSONObject(tunOptionsJson)
