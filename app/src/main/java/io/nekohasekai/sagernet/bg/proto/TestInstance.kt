@@ -46,8 +46,7 @@ class TestInstance(profile: ProxyEntity, val link: String, val timeout: Int) :
     override suspend fun loadConfig() {
         // don't call destroyAllJsi here
         if (BuildConfig.DEBUG) Logs.d(config.config)
-        box = Libbox.newSingBoxInstance(config.config)
-        box.forTest = true
+        box = Libbox.newSingBoxInstance(config.config, true)
     }
 
 }
