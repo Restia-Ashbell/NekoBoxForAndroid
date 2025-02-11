@@ -35,13 +35,8 @@ const val TAG_MIXED = "mixed-in"
 
 const val TAG_PROXY = "proxy"
 const val TAG_DIRECT = "direct"
-const val TAG_BLOCK = "block"
-
-const val TAG_DNS_IN = "dns-in"
-const val TAG_DNS_OUT = "dns-out"
 
 const val LOCALHOST = "127.0.0.1"
-const val LOCAL_DNS_SERVER = "local"
 
 class ConfigBuildResult(
     var config: String,
@@ -155,7 +150,6 @@ fun buildConfig(
     val enableDnsRouting = DataStore.enableDnsRouting
     val useFakeDns = DataStore.enableFakeDns && !forTest
     val needSniff = DataStore.trafficSniffing > 0
-    val needSniffOverride = DataStore.trafficSniffing == 2
     val externalIndexMap = ArrayList<IndexEntity>()
     val ipv6Mode = if (forTest) IPv6Mode.ENABLE else DataStore.ipv6Mode
 
@@ -230,11 +224,7 @@ fun buildConfig(
                     TunImplementation.SYSTEM -> "system"
                     else -> "mixed"
                 }
-                endpoint_independent_nat = true
                 mtu = DataStore.mtu
-                domain_strategy = genDomainStrategy(DataStore.resolveDestination)
-                sniff = needSniff
-                sniff_override_destination = needSniffOverride
                 when (ipv6Mode) {
                     IPv6Mode.DISABLE -> {
                         address = listOf(VpnService.PRIVATE_VLAN4_CLIENT + "/30")
@@ -257,9 +247,6 @@ fun buildConfig(
                 tag = TAG_MIXED
                 listen = bind
                 listen_port = DataStore.mixedPort
-                domain_strategy = genDomainStrategy(DataStore.resolveDestination)
-                sniff = needSniff
-                sniff_override_destination = needSniffOverride
             })
         }
 
@@ -270,6 +257,7 @@ fun buildConfig(
             auto_detect_interface = true
             rules = mutableListOf()
             rule_set = mutableListOf()
+            default_domain_resolver = "dns-local"
         }
 
         // returns outbound tag
@@ -554,7 +542,10 @@ fun buildConfig(
 
                 when (rule.outbound) {
                     -1L -> {
-                        userDNSRuleList += makeDnsRuleObj().apply { server = "dns-direct" }
+                        userDNSRuleList += makeDnsRuleObj().apply { 
+                            server = "dns-direct"
+                            strategy = autoDnsDomainStrategy(SingBoxOptionsUtil.domainStrategy("dns-direct"))
+                        }
                     }
 
                     0L -> {
@@ -564,27 +555,32 @@ fun buildConfig(
                         }
                         userDNSRuleList += makeDnsRuleObj().apply {
                             server = "dns-remote"
+                            strategy = autoDnsDomainStrategy(SingBoxOptionsUtil.domainStrategy("dns-remote"))
                         }
                     }
 
                     -2L -> {
                         userDNSRuleList += makeDnsRuleObj().apply {
-                            server = "dns-block"
+                            action = "reject"
                             disable_cache = true
                         }
                     }
                 }
 
-                outbound = when (val outId = rule.outbound) {
-                    0L -> TAG_PROXY
-                    -1L -> TAG_DIRECT
-                    -2L -> TAG_BLOCK
-                    else -> if (outId == proxy.id) TAG_PROXY else tagMap[outId] ?: ""
+                if (rule.outbound == -2L) {
+                    action = "reject"
+                } else {
+                    outbound = when (val outId = rule.outbound) {
+                        0L -> TAG_PROXY
+                        -1L -> TAG_DIRECT
+                        -2L -> ""
+                        else -> if (outId == proxy.id) TAG_PROXY else tagMap[outId] ?: ""
+                    }
                 }
             }
 
             if (!ruleObj.checkEmpty()) {
-                if (ruleObj.outbound.isNullOrBlank()) {
+                if (ruleObj.outbound.isNullOrBlank() && ruleObj.action.isNullOrBlank()) {
                     Toast.makeText(
                         SagerNet.application,
                         "Warning: " + rule.displayName() + ": A non-existent outbound was specified.",
@@ -602,27 +598,6 @@ fun buildConfig(
             type = "direct"
         }.asMap())
 
-        outbounds.add(Outbound().apply {
-            tag = TAG_BLOCK
-            type = "block"
-        }.asMap())
-
-        if (!forTest) {
-            inbounds.add(0, Inbound_DirectOptions().apply {
-                type = "direct"
-                tag = TAG_DNS_IN
-                listen = bind
-                listen_port = DataStore.localDNSPort
-                override_address = "8.8.8.8"
-                override_port = 53
-            })
-
-            outbounds.add(Outbound().apply {
-                type = "dns"
-                tag = TAG_DNS_OUT
-            }.asMap())
-        }
-
         // Bypass Lookup for the first profile
         bypassDNSBeans.forEach {
             var serverAddr = it.serverAddress
@@ -636,99 +611,94 @@ fun buildConfig(
             }
         }
 
-        // remote dns obj
-        remoteDns.firstOrNull().let {
-            dns.servers.add(DNSServerOptions().apply {
-                address = it ?: throw Exception("No remote DNS, check your settings!")
-                tag = "dns-remote"
-                address_resolver = "dns-direct"
-                strategy = autoDnsDomainStrategy(SingBoxOptionsUtil.domainStrategy(tag))
-            })
-        }
-
-        // add directDNS objects here
-        directDNS.firstOrNull().let {
-            dns.servers.add(DNSServerOptions().apply {
-                address = it ?: throw Exception("No direct DNS, check your settings!")
-                tag = "dns-direct"
-                detour = TAG_DIRECT
-                address_resolver = "dns-local"
-                strategy = autoDnsDomainStrategy(SingBoxOptionsUtil.domainStrategy(tag))
-            })
-        }
-        dns.servers.add(DNSServerOptions().apply {
-            address = LOCAL_DNS_SERVER
-            tag = "dns-local"
-            detour = TAG_DIRECT
-        })
-        dns.servers.add(DNSServerOptions().apply {
-            address = "rcode://success"
-            tag = "dns-block"
-        })
-
-        // dns object user rules
-        if (enableDnsRouting) {
-            userDNSRuleList.forEach {
-                if (!it.checkEmpty()) dns.rules.add(it)
+        fun parseDnsAddress(input: String): Pair<String, String> {
+            return when {
+                input == "local" -> "local" to ""
+                input.startsWith("dncp//") -> "dhcp" to ""
+                input.startsWith("tcp://") -> "tcp" to input.substringAfter("tcp://")
+                input.startsWith("tls://") -> "tls" to input.substringAfter("tls://")
+                input.startsWith("https://") -> "https" to input.substringAfter("https://").substringBefore("/")
+                input.startsWith("h3://") -> "h3" to input.substringAfter("h3://").substringBefore("/")
+                input.startsWith("quic://") -> "quic" to input.substringAfter("quic://")
+                else -> "udp" to input
             }
         }
 
-        if (forTest) {
-            // Always use system DNS for urlTest
-            dns.servers = listOf(
-                DNSServerOptions().apply {
-                    address = LOCAL_DNS_SERVER
-                    tag = "dns-local"
+        if (!forTest) {
+            // remote dns obj
+            remoteDns.firstOrNull().let {
+                dns.servers.add(DNSServerOptions().apply {
+                    val firstDns = it ?: throw Exception("No remote DNS, check your settings!")
+                    val (dnsType, dnsServer) = parseDnsAddress(firstDns)
+                    type = dnsType
+                    if (dnsServer.isNotEmpty()) server = dnsServer
+                    tag = "dns-remote"
+                    detour = TAG_PROXY
+                    domain_resolver = "dns-direct"
+                })
+            }
+            // add directDNS objects here
+            directDNS.firstOrNull().let {
+                dns.servers.add(DNSServerOptions().apply {
+                    val firstDns = it ?: throw Exception("No direct DNS, check your settings!")
+                    val (dnsType, dnsServer) = parseDnsAddress(firstDns)
+                    type = dnsType
+                    if (dnsServer.isNotEmpty()) server = dnsServer
+                    tag = "dns-direct"
                     detour = TAG_DIRECT
+                    domain_resolver = "dns-local"
+                })
+            }
+
+            // dns object user rules
+            if (enableDnsRouting) {
+                userDNSRuleList.forEach {
+                    if (!it.checkEmpty()) dns.rules.add(it)
                 }
-            )
-            dns.rules = listOf()
-        } else {
+            }
             // built-in DNS rules
             route.rules.add(0, Rule_DefaultOptions().apply {
-                inbound = listOf(TAG_DNS_IN)
-                outbound = TAG_DNS_OUT
-            })
-            route.rules.add(0, Rule_DefaultOptions().apply {
                 port = listOf(53)
-                outbound = TAG_DNS_OUT
+                action = "hijack-dns"
             }) // TODO new mode use system dns?
+            if (needSniff) {
+                route.rules.add(0, Rule_DefaultOptions().apply {
+                    inbound = listOf("tun-in")
+                    action = "sniff"
+                })
+            }
+            if (DataStore.resolveDestination) {
+                route.rules.add(0, Rule_DefaultOptions().apply {
+                    action = "resolve"
+                    strategy = genDomainStrategy(DataStore.resolveDestination)
+                })
+            }
             if (DataStore.bypassLanInCore) {
                 route.rules.add(Rule_DefaultOptions().apply {
                     outbound = TAG_DIRECT
                     ip_is_private = true
                 })
             }
-            // block mcast
-            route.rules.add(Rule_DefaultOptions().apply {
-                ip_cidr = listOf("224.0.0.0/3", "ff00::/8")
-                source_ip_cidr = listOf("224.0.0.0/3", "ff00::/8")
-                outbound = TAG_BLOCK
-            })
             // FakeDNS obj
             if (useFakeDns) {
-                dns.fakeip = DNSFakeIPOptions().apply {
-                    enabled = true
+                dns.servers.add(DNSServerOptions().apply {
+                    tag = "dns-fake"
+                    type = "fakeip"
                     inet4_range = "198.18.0.0/15"
                     inet6_range = "fc00::/18"
-                }
-                dns.servers.add(DNSServerOptions().apply {
-                    address = "fakeip"
-                    tag = "dns-fake"
-                    strategy = "ipv4_only"
                 })
                 dns.rules.add(DNSRule_DefaultOptions().apply {
                     inbound = listOf("tun-in")
                     server = "dns-fake"
+                    strategy = "ipv4_only"
                     disable_cache = true
                 })
             }
-            // any outbound dns
-            dns.rules.add(0, DNSRule_DefaultOptions().apply {
-                    outbound = listOf("any")
-                    server = "dns-direct"
-            })
         }
+        dns.servers.add(DNSServerOptions().apply {
+            tag = "dns-local"
+            type = "local"
+        })
     }.let {
         ConfigBuildResult(
             gson.toJson(it.asMap().apply {

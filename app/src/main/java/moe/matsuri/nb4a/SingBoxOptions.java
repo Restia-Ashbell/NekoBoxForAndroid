@@ -253,15 +253,30 @@ public class SingBoxOptions {
 
         public String tag;
 
-        public String address;
+        public String type;
 
-        public String address_resolver;
+        public String server;
 
-        public String address_strategy;
+        public String server_port;
 
-        public Long address_fallback_delay;
+        //tls
+        public String tls;
 
-        public String strategy;
+        //http
+        public String path;
+
+        public String headers;
+
+        // //dhcp
+        // public String interface;
+
+        //fakeip
+        public String inet4_range;
+
+        public String inet6_range;
+
+        //Dial Fields
+        public String domain_resolver;
 
         public String detour;
 
@@ -975,8 +990,6 @@ public class SingBoxOptions {
         @SerializedName("final")
         public String final_;
 
-        public Boolean find_process;
-
         public Boolean auto_detect_interface;
 
         public Boolean override_android_vpn;
@@ -984,6 +997,8 @@ public class SingBoxOptions {
         public String default_interface;
 
         public Integer default_mark;
+
+        public String default_domain_resolver;
 
     }
 
@@ -1169,6 +1184,11 @@ public class SingBoxOptions {
 
         public Integer rewrite_ttl;
 
+        public String client_subnet;
+
+        public String action;
+
+        public String strategy;
     }
 
     public static class ShadowsocksInboundOptions extends SingBoxOption {
@@ -4347,7 +4367,6 @@ public class SingBoxOptions {
 
         public Boolean source_ip_is_private;
 
-        public Boolean rule_set_ipcidr_match_source;
         public Boolean ip_is_private;
 
         // Generate note: Listable
@@ -4389,6 +4408,9 @@ public class SingBoxOptions {
 
         public String outbound;
 
+        public String action;
+
+        public String strategy;
     }
 
     public static class DNSRule_DefaultOptions extends DNSRule {
@@ -4466,6 +4488,12 @@ public class SingBoxOptions {
         public Boolean disable_cache;
 
         public Integer rewrite_ttl;
+
+        public String client_subnet;
+
+        public String action;
+
+        public String strategy;
 
     }
 
