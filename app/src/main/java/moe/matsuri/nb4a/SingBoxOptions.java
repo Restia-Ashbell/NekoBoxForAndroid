@@ -4411,6 +4411,8 @@ public class SingBoxOptions {
         public String action;
 
         public String strategy;
+
+        public Boolean tls_fragment;
     }
 
     public static class DNSRule_DefaultOptions extends DNSRule {
